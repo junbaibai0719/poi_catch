@@ -1,0 +1,102 @@
+[
+    {
+        "classes": [
+            {
+                "className": "ThreadLoop",
+                "qualifiedClassName": "ThreadLoop",
+                "object": false,
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QThread"
+                    }
+                ]
+            },
+            {
+                "className": "PoiModel",
+                "qualifiedClassName": "PoiModel",
+                "object": true,
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "ObjectItemModel"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ],
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "auto"
+                    }
+                ],
+                "properties": [
+                    {
+                        "name": "apiName",
+                        "type": "QString",
+                        "index": 0,
+                        "read": "apiName",
+                        "notify": "apiNameChanged",
+                        "write": "apiName"
+                    },
+                    {
+                        "name": "city",
+                        "type": "QString",
+                        "index": 1,
+                        "read": "city",
+                        "notify": "cityChanged",
+                        "write": "city"
+                    },
+                    {
+                        "name": "keyword",
+                        "type": "QString",
+                        "index": 2,
+                        "read": "keyword",
+                        "notify": "keywordChanged",
+                        "write": "keyword"
+                    },
+                    {
+                        "name": "total",
+                        "type": "int",
+                        "index": 3,
+                        "read": "total",
+                        "notify": "totalChanged",
+                        "write": "total"
+                    },
+                    {
+                        "name": "currentPage",
+                        "type": "int",
+                        "index": 4,
+                        "read": "currentPage",
+                        "notify": "currentPageChanged",
+                        "write": "currentPage"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "name": "on_apiNameChanged",
+                        "arguments": [
+                            {
+                                "name": "a1",
+                                "type": "QString"
+                            }
+                        ],
+                        "returnType": "void"
+                    }
+                ]
+            }
+        ],
+        "outputRevision": 68,
+        "QML_IMPORT_NAME": "poi",
+        "QML_IMPORT_MAJOR_VERSION": 1,
+        "QML_IMPORT_MINOR_VERSION": 0,
+        "QT_MODULES": [
+            "QtCore",
+            "QtQml"
+        ],
+        "inputFile": "D:/Documents/py_project/poi_catch/poi_catch/models/PoiModel.py"
+    }
+]

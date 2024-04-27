@@ -1,0 +1,12 @@
+{
+    "files": [
+        "Pagination.qml",
+        "main.py",
+        "main.qml",
+        "models/PoiModel.py",
+        "models/poi.py",
+        "utils/logger.py",
+        "utils/timer.py",
+        "ws/ws.py"
+    ]
+}
