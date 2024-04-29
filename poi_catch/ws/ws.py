@@ -27,13 +27,13 @@ async def poi_search_tx(sess: aiohttp.ClientSession, key: str, SK: str, keyword:
         return await resp.json()
 
 
-async def poi_search_360(sess: aiohttp.ClientSession, keyword: str, city: str) -> dict:
+async def poi_search_360(sess: aiohttp.ClientSession, keyword: str, city: str, pn: int = 1) -> dict:
     params = {
         "keyword": keyword,
         "cityname": city,
         "d": "pc",
         "brand_cpc": "on",
-        "batch": 1,
+        "batch": pn,
         "number": 10,
         "qii": "true",
         "scheme": "https",
@@ -55,7 +55,7 @@ async def poi_search_360(sess: aiohttp.ClientSession, keyword: str, city: str) -
             return await resp.json()
 
 
-async def poi_search_baidu(sess: aiohttp.ClientSession, keyword: str, city: str, pn=1) -> dict:
+async def poi_search_baidu(sess: aiohttp.ClientSession, keyword: str, city: str, pn: int = 1) -> dict:
     resp = await sess.get(f"/?qt=cur&wd={city}")
     data = json.loads(await resp.read())
     if "content" not in data:
