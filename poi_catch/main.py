@@ -11,18 +11,27 @@ import qasync
 
 from models import PoiModel, poi
 
-qtquickcontrols2_conf_path = pathlib.Path(__file__).absolute().parent.joinpath("qtquickcontrols2.conf")
+qtquickcontrols2_conf_path = pathlib.Path(
+    __file__).absolute().parent.joinpath("qtquickcontrols2.conf")
+
+
 
 if __name__ == "__main__":
     import os
     os.environ["QT_QUICK_CONTROLS_CONF"] = qtquickcontrols2_conf_path.as_posix()
     app = QGuiApplication(sys.argv)
-
+    app.setOrganizationName("junbaibai")
+    app.setApplicationName("poi_catch")
 
     loop = qasync.QEventLoop(app)
     asyncio.set_event_loop(loop)
     # QQuickStyle.setStyle("Material")
     engine = QQmlApplicationEngine()
+    engine.setInitialProperties(
+        {
+            "settingsLocation": PoiModel.construct_settings_location(),
+        }
+    )
     qml_file = Path(__file__).resolve().parent / "main.qml"
     engine.load(qml_file)
     if not engine.rootObjects():

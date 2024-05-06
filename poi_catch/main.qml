@@ -1,7 +1,9 @@
 import QtQuick
 import QtQuick.Controls
+//import QtQuick.Dialogs
 import QtQuick.Window
 import Qt.labs.qmlmodels
+import QtCore
 
 import poi
 
@@ -11,12 +13,51 @@ Window {
     height: 768
     visible: true
     title: qsTr("POI抓取工具")
+    required property string settingsLocation
     Component.onCompleted: {
+    }
+    Dialog {
+        id: tencentSettingDialog
+        anchors.centerIn: parent
+        title: qsTr("腾讯api key")
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        closePolicy: Popup.NoAutoClose
+        property string key: ""
+        property string sk: ""
+        ApiKeyConfigPage {
+            id: tencentApiKeyConfigPage
+            key: tencentSettingDialog.key
+            sk: tencentSettingDialog.sk
+
+        }
+        onAccepted: {
+            key = tencentApiKeyConfigPage.key
+            sk = tencentApiKeyConfigPage.sk
+        }
+        onRejected: {
+            tencentApiKeyConfigPage.key = tencenSettings.key
+            tencentApiKeyConfigPage.sk = tencenSettings.sk
+        }
+    }
+    Settings {
+        id: tencenSettings
+        category: "tencent"
+        location: window.settingsLocation
+        property alias key: tencentSettingDialog.key
+        property alias sk: tencentSettingDialog.sk
 
     }
+    Settings {
+        category: "gaode"
+        location: window.settingsLocation
+        property string key: ""
+        property string sk: ""
+    }
+
     Row {
         id: searchInfoRow
         topPadding: 10
+        spacing: 4
         TextField {
             id: cityField
             placeholderText: qsTr("城市")
@@ -55,10 +96,24 @@ Window {
                 text: qsTr("腾讯")
             }
         }
-        Button{
+        Button {
             highlighted: true
             text: qsTr("开始采集")
             onClicked: poiModel.fetchPoiData()
+        }
+        ToolButton {
+            text: qsTr("设置")
+            highlighted: true
+            onClicked: settingMenu.open()
+            Menu {
+                id: settingMenu
+                y: parent.height
+
+                MenuItem {
+                    text: qsTr("腾讯apikey")
+                    onTriggered: tencentSettingDialog.open()
+                }
+            }
         }
     }
     Item {
@@ -81,10 +136,12 @@ Window {
             boundsBehavior: Flickable.StopAtBounds
             resizableColumns: true
             clip: true
-            columnWidthProvider:function(column){
+            columnWidthProvider: function (column) {
                 return (poiTable.width - poiTableScrollBar.width - 16) / 7
             }
-            ScrollBar.vertical: ScrollBar { id: poiTableScrollBar }
+            ScrollBar.vertical: ScrollBar {
+                id: poiTableScrollBar
+            }
             model: PoiModel {
                 id: poiModel
                 TableModelColumn {
@@ -114,7 +171,7 @@ Window {
                 padding: 8
                 wrapMode: TextInput.WrapAnywhere
                 //            implicitWidth: contentWidth + Math.max((leftPadding + rightPadding), padding*2)
-//                implicitWidth: TableView.view.width / 7
+                //                implicitWidth: TableView.view.width / 7
                 text: model.display
                 readOnly: true
             }

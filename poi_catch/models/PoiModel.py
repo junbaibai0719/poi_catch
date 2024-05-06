@@ -1,8 +1,11 @@
 import asyncio
+import os
+import pathlib
 import traceback
 from typing import List, Tuple
-from PySide6.QtCore import Property, QModelIndex, QObject, QPersistentModelIndex, QThread, Signal, QAbstractItemModel, Slot
+from PySide6.QtCore import Property, QModelIndex, QObject, QPersistentModelIndex, QSettings, QThread, QUrl, Signal, QAbstractItemModel, Slot
 
+from PySide6.QtCore import QCoreApplication
 from PySide6.QtQml import QmlElement, qmlRegisterType
 import aiohttp
 import qasync
@@ -19,6 +22,16 @@ QML_IMPORT_MINOR_VERSION = 0  # Optional
 
 log = Logger(__name__)
 
+
+def construct_settings_location() -> str:
+    path = pathlib.Path(os.getenv("APPDATA")).absolute().joinpath(
+        f"{QCoreApplication.instance().organizationName().upper()[0]}{QCoreApplication.instance().organizationName()[1:]}"
+    ).joinpath(
+        QCoreApplication.instance().applicationName()
+    ).joinpath(
+        "poi_catch.ini"
+    )
+    return f"file:///{path.as_posix()}"
 
 class ThreadLoop(QThread):
 
@@ -154,10 +167,8 @@ class PoiModel(ObjectItemModel, QObject):
     async def parse_baidu_poi(self, keyword, city, page = 1) -> Tuple[int, List[Poi]]:
         log.info(f"fetching poi data from {self.apiName}")
         log.info(f"city: {city}, keyword: {keyword}")
-        from ws.ws import poi_search_baidu
-        async with aiohttp.ClientSession("https://map.baidu.com", headers={
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0"
-        }) as sess:
+        from ws.ws import poi_search_baidu, sess_baidu
+        async with sess_baidu() as sess:
             res = await poi_search_baidu(sess, keyword, city, page)
             total = res["result"]["total"]
             total = int(total)
@@ -187,10 +198,8 @@ class PoiModel(ObjectItemModel, QObject):
         :param page: 页码
         :return: 总数和POI列表
         """
-        from ws.ws import poi_search_360
-        async with aiohttp.ClientSession("https://restapi.map.360.cn", headers={
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0"
-        }) as sess:
+        from ws.ws import poi_search_360, sess_360
+        async with sess_360() as sess:
             res = await poi_search_360(sess, keyword, city, page)
             total = res.get("totalcount", 0)
             total = int(total)
@@ -210,4 +219,45 @@ class PoiModel(ObjectItemModel, QObject):
             poi_list = []
             if "poi" in res:
                 poi_list = content2poi(res["poi"])
+            return total, poi_list
+        
+    async def parse_tx_poi(self, keyword, city, page=1) -> Tuple[int, List[Poi]]:
+        """
+        解析腾讯地图POI
+        :param keyword: 关键字
+        :param city: 城市
+        :param page: 页码
+        :return: 总数和POI列表
+        """
+        from ws.ws import poi_search_tx, sess_tx
+        async with sess_tx() as sess:
+            settings = QSettings(QUrl(construct_settings_location()).toLocalFile(), QSettings.Format.IniFormat)
+            log.info(construct_settings_location())
+            log.info(settings.contains("tencent/key"))
+            key = settings.value("tencent/key", "")
+            sk = settings.value("tencent/sk", "")
+            log.info(f"{key}, {sk}")
+            res = await poi_search_tx(sess, key, sk, keyword, city, page)
+            if res["status"] != 0:
+                # todo
+                ...
+            
+            total = res.get("count", 0)
+            total = int(total)
+            def content2poi(content:List[dict]):
+                poi_list = []
+                for poi_info in content:
+                    poi = Poi()
+                    poi.name = poi_info["title"]
+                    poi.city = poi_info["ad_info"]["city"]
+                    poi.addr = poi_info["address"]
+                    poi.tel = poi_info.get("tel", "")
+                    poi.lat = poi_info["location"]["lat"]
+                    poi.lng = poi_info["location"]["lng"]
+                    poi.category = poi_info["category"]
+                    poi_list.append(poi)
+                return poi_list
+            poi_list = []
+            if "data" in res:
+                poi_list = content2poi(res["data"])
             return total, poi_list
