@@ -57,6 +57,10 @@ Module {
             name: "on_apiNameChanged"
             Parameter { name: "a1"; type: "QString" }
         }
+        Method {
+            name: "on_currentPageChanged"
+            Parameter { name: "a1"; type: "int" }
+        }
     }
     Component {
         file: "qobject.h"

@@ -1,0 +1,1 @@
+pyside6-project deploy

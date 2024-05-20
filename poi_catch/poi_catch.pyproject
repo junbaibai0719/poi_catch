@@ -2,12 +2,14 @@
     "files": [
         "ApiKeyConfigPage.qml",
         "Pagination.qml",
-        "main.py",
+        "poi_catch.py",
         "main.qml",
         "models/PoiModel.py",
         "models/poi.py",
         "utils/logger.py",
         "utils/timer.py",
-        "ws/ws.py"
+        "ws/ws.py",
+        "qtquickcontrols2.conf",
+        "icons/poi_catch.ico"
     ]
 }

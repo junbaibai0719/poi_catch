@@ -85,6 +85,17 @@
                             }
                         ],
                         "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "name": "on_currentPageChanged",
+                        "arguments": [
+                            {
+                                "name": "a1",
+                                "type": "int"
+                            }
+                        ],
+                        "returnType": "void"
                     }
                 ]
             }

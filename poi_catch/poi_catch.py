@@ -4,7 +4,7 @@ import pathlib
 import sys
 from pathlib import Path
 
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuickControls2 import QQuickStyle
 import qasync
@@ -22,6 +22,7 @@ if __name__ == "__main__":
     app = QGuiApplication(sys.argv)
     app.setOrganizationName("junbaibai")
     app.setApplicationName("poi_catch")
+    app.setWindowIcon(QIcon("icons/poi_catch.ico"))
 
     loop = qasync.QEventLoop(app)
     asyncio.set_event_loop(loop)
