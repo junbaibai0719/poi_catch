@@ -2,7 +2,7 @@ import asyncio
 import os
 import pathlib
 import traceback
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from PySide6.QtCore import Property, QModelIndex, QObject, QPersistentModelIndex, QSettings, QThread, QUrl, Signal, QAbstractItemModel, Slot
 
 from PySide6.QtCore import QCoreApplication
@@ -11,8 +11,8 @@ import aiohttp
 import qasync
 import qdataclass
 
-from models.ObjectItemModel import ObjectItemModel
-from models.poi import Poi
+from .ObjectItemModel import ObjectItemModel
+from .poi import Poi
 from utils.logger import Logger
 
 
@@ -24,10 +24,13 @@ log = Logger(__name__)
 
 
 def construct_settings_location() -> str:
-    path = pathlib.Path(os.getenv("APPDATA")).absolute().joinpath(
-        f"{QCoreApplication.instance().organizationName().upper()[0]}{QCoreApplication.instance().organizationName()[1:]}"
+    instance = QCoreApplication.instance()
+    if instance is None:
+        raise RuntimeError("QCoreApplication instance is not available")
+    path = pathlib.Path(str(os.getenv("APPDATA"))).absolute().joinpath(
+        f"{instance.organizationName().upper()[0]}{instance.organizationName()[1:]}"
     ).joinpath(
-        QCoreApplication.instance().applicationName()
+        instance.applicationName()
     ).joinpath(
         "poi_catch.ini"
     )
@@ -35,9 +38,9 @@ def construct_settings_location() -> str:
 
 class ThreadLoop(QThread):
 
-    def __init__(self, parent: QObject = None) -> None:
+    def __init__(self, parent: Optional[QObject] = None) -> None:
         super().__init__(parent)
-        self.loop: asyncio.BaseEventLoop = asyncio.new_event_loop()
+        self.loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
         # 设置接口并发数
         self.semaphore = asyncio.Semaphore(6, loop=self.loop)
 
@@ -79,7 +82,7 @@ class PoiModel(ObjectItemModel, QObject):
     def apiName(self):
         return self._api_name
     
-    @apiName.setter
+    @apiName.setter # type: ignore
     def apiName(self, value):
         self._api_name = value
         self.apiNameChanged.emit(value)
@@ -102,7 +105,7 @@ class PoiModel(ObjectItemModel, QObject):
     def city(self):
         return self._city
     
-    @city.setter
+    @city.setter # type: ignore
     def city(self, value):
         self._city = value
         self.cityChanged.emit(value)
@@ -112,7 +115,7 @@ class PoiModel(ObjectItemModel, QObject):
     def keyword(self):
         return self._keyword
     
-    @keyword.setter
+    @keyword.setter # type: ignore
     def keyword(self, value):
         self._keyword = value
         self.keywordChanged.emit(value)
@@ -122,7 +125,7 @@ class PoiModel(ObjectItemModel, QObject):
     def total(self):
         return self._total
     
-    @total.setter
+    @total.setter # type: ignore
     def total(self, value):
         self._total = value
         self.totalChanged.emit(value)
@@ -132,7 +135,7 @@ class PoiModel(ObjectItemModel, QObject):
     def currentPage(self):
         return self._current_page
     
-    @currentPage.setter
+    @currentPage.setter # type: ignore
     def currentPage(self, value):
         self._current_page = value
         self.currentPageChanged.emit(value)
@@ -234,8 +237,8 @@ class PoiModel(ObjectItemModel, QObject):
             settings = QSettings(QUrl(construct_settings_location()).toLocalFile(), QSettings.Format.IniFormat)
             log.info(construct_settings_location())
             log.info(settings.contains("tencent/key"))
-            key = settings.value("tencent/key", "")
-            sk = settings.value("tencent/sk", "")
+            key:str = str(settings.value("tencent/key", ""))
+            sk:str = str(settings.value("tencent/sk", ""))
             log.info(f"{key}, {sk}")
             res = await poi_search_tx(sess, key, sk, keyword, city, page)
             if res["status"] != 0:

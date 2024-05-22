@@ -1,8 +1,7 @@
-from typing import Any, Dict, Generic, List, TypeVar, Union
+from typing import Any, Dict, Generic, List, TypeVar, Union, overload
 from PySide6.QtCore import ClassInfo, Property, QByteArray, QMetaObject, QModelIndex, QObject, QPersistentModelIndex, Qt, Signal, QAbstractItemModel
 from PySide6.QtQml import ListProperty, QJSValue, QmlElement, qmlRegisterType
 
-import qdataclass
 
 QML_IMPORT_NAME = "qdataclass.models"
 QML_IMPORT_MAJOR_VERSION = 1
@@ -11,14 +10,14 @@ QML_IMPORT_MINOR_VERSION = 0 # Optional
 T = TypeVar("T")
 
 @QmlElement
-@ClassInfo(DefaultProperty="columns")
+@ClassInfo(DefaultProperty="columns") # type: ignore
 class ObjectItemModel(QAbstractItemModel, Generic[T], QObject):
     """
     a model that contains a list of objects
     暂不支持多层嵌套
     todo multi-level nesting support
     """
-    __special_type__:type = None
+    __special_type__:type = object
 
     def __new__(cls):
         if hasattr(cls, "__orig_bases__") and not cls.__special_type__:
@@ -37,7 +36,7 @@ class ObjectItemModel(QAbstractItemModel, Generic[T], QObject):
     def rows(self) -> List[T]:
         return self._rows
     
-    @rows.setter
+    @rows.setter # type: ignore
     def rows(self, rows: List[T]):
         self.beginResetModel()
         self._rows = rows
@@ -57,21 +56,29 @@ class ObjectItemModel(QAbstractItemModel, Generic[T], QObject):
         self._columns.append(column_dict)
 
     columnsChanged = Signal()
-    columns = ListProperty(QObject, appendColumn, notify=columnsChanged)
+    columns = ListProperty(QObject, appendColumn, notify=columnsChanged) # type: ignore
     
 
-    def index(self, row: int, column: int, parent: Union[QPersistentModelIndex, QModelIndex] = None) -> QModelIndex:
+    def index(self, row: int, column: int, parent: Union[QPersistentModelIndex, QModelIndex] = QModelIndex()) -> QModelIndex:
         if row < 0 or row >= len(self._rows):
             return QModelIndex()
         if column < 0 or column >= self.columnCount(parent):
             return QModelIndex()
         return self.createIndex(row, column)
     
-    def parent(self, index: QModelIndex) -> QModelIndex:
+    @overload
+    def parent(self) -> QObject:
+        ...
+
+    @overload
+    def parent(self, child: Union[QModelIndex, QPersistentModelIndex]) -> QModelIndex:
+        ...
+
+    def parent(self, child: Union[QModelIndex, QPersistentModelIndex]=QModelIndex()) -> Union[QModelIndex, QObject]:
         return QModelIndex()
     
     
-    def columnCount(self, parent: Union[QPersistentModelIndex, QModelIndex] = None) -> int:
+    def columnCount(self, parent: Union[QPersistentModelIndex, QModelIndex] = QModelIndex()) -> int:
         return max(self._columns.__len__(), 1)
     
     def roleNames(self) -> Dict[int, QByteArray]:
@@ -82,14 +89,14 @@ class ObjectItemModel(QAbstractItemModel, Generic[T], QObject):
         })
         return role_names
 
-    def data(self, index: QModelIndex, role: int = ...) -> str:
+    def data(self, index: Union[QModelIndex, QPersistentModelIndex], role: int = 0) -> Any:
         if not index.isValid():
             return None
         data = self._rows[index.row()]
-        role_name = self.roleNames().get(role)
-        if not role_name:
+        role_name_b = self.roleNames().get(role)
+        if not role_name_b:
             return None
-        role_name = role_name.toStdString()
+        role_name = role_name_b.toStdString()
         if role_name == "modelData":
             return data
         if self._columns.__len__() == 0:
@@ -104,15 +111,15 @@ class ObjectItemModel(QAbstractItemModel, Generic[T], QObject):
         else:
             return None
     
-    def setData(self, index: Union[QPersistentModelIndex, QModelIndex], value: Any, role: int = None) -> bool:
+    def setData(self, index: Union[QPersistentModelIndex, QModelIndex], value: Any, role: int = 0) -> bool:
         if not index.isValid():
             return False
         if role is None:
             return False
-        role_name = self.roleNames().get(role)
-        if not role_name:
+        role_name_b = self.roleNames().get(role)
+        if not role_name_b:
             return False
-        role_name = role_name.toStdString()
+        role_name = role_name_b.toStdString()
         if role_name == "modelData":
             self._rows[index.row()] = value
             self.dataChanged.emit(index, role)
@@ -122,8 +129,9 @@ class ObjectItemModel(QAbstractItemModel, Generic[T], QObject):
         prop_name = self._columns[index.column()].get(role_name)
         if not prop_name:
             return False
-        if isinstance(self._rows[index.row()], dict):
-            self._rows[index.row()][prop_name] = value
+        item = self._rows[index.row()]
+        if isinstance(item, dict):
+            item[prop_name] = value
             self.dataChanged.emit(index, role)
             return True
         if hasattr(self._rows[index.row()], prop_name):
@@ -132,7 +140,7 @@ class ObjectItemModel(QAbstractItemModel, Generic[T], QObject):
             return True
         return False
 
-    def rowCount(self, parent: Union[QPersistentModelIndex, QModelIndex] = None) -> int:
+    def rowCount(self, parent: Union[QPersistentModelIndex, QModelIndex] = QModelIndex()) -> int:
         return len(self._rows)
     
     def modelData(self, index: QModelIndex) -> T:

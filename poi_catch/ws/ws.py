@@ -67,6 +67,7 @@ async def poi_search_360(sess: aiohttp.ClientSession, keyword: str, city: str, p
     async with sess.get(uri) as resp:
         if resp.status == 200:
             return await resp.json()
+        return {}
 
 
 def sess_baidu() -> aiohttp.ClientSession:
@@ -79,7 +80,7 @@ async def poi_search_baidu(sess: aiohttp.ClientSession, keyword: str, city: str,
     resp = await sess.get(f"/?qt=cur&wd={city}")
     data = json.loads(await resp.read())
     if "content" not in data:
-        return None
+        return {}
     cid = data["content"]["area"]
     resp = await sess.get(f"/?qt=spot&c={cid}&wd={keyword}&pn={pn}")
     return json.loads(await resp.read())
